@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/MichelMichels.RttSharp.Demo/MichelMichels.RttSharp.Demo.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MichelMichels.RttSharp/MichelMichels.RttSharp.csproj" />
+  </Folder>
+</Solution>
