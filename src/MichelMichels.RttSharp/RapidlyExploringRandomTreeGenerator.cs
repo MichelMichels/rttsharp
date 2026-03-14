@@ -14,15 +14,20 @@ public class RapidlyExploringRandomTreeGenerator
 
         for (int i = 0; i < vertexCount; i++)
         {
-            PointF randomVertex = GenerateRandomVertex(width, height);
-            PointF nearestVertex = CalculateNearestVertex(randomVertex, rtt.Vertices);
-            PointF newVertex = StepFromPointToPoint(nearestVertex, randomVertex, distance);
-
-            rtt.Vertices.Add(newVertex);
-            rtt.Edges.Add(new LineF(nearestVertex, newVertex));
+            GenerateNextVertex(rtt, width, height, distance);
         }
 
         return rtt;
+    }
+
+    public void GenerateNextVertex(RapidlyExploringRandomTree rtt, int width, int height, double distance)
+    {
+        PointF randomVertex = GenerateRandomVertex(width, height);
+        PointF nearestVertex = CalculateNearestVertex(randomVertex, rtt.Vertices);
+        PointF newVertex = StepFromPointToPoint(nearestVertex, randomVertex, distance);
+
+        rtt.Vertices.Add(newVertex);
+        rtt.Edges.Add(new LineF(nearestVertex, newVertex));
     }
 
     private PointF GenerateRandomVertex(int width, int height)
@@ -33,6 +38,11 @@ public class RapidlyExploringRandomTreeGenerator
     }
     private PointF CalculateNearestVertex(PointF vertex, List<PointF> vertices)
     {
+        if (vertices.Count == 0)
+        {
+            return vertex;
+        }
+
         PointF nearest = vertices[0];
 
         foreach (PointF v in vertices)
