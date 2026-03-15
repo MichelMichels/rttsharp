@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using MichelMichels.RttSharp;
 using MichelMichels.RttSharp.Models;
 using Sdl3Sharp;
@@ -10,6 +8,7 @@ using Sdl3Sharp.Video.Windowing;
 
 public class App : AppBase
 {
+    private const int WINDOW_MARGIN = 16;
     private Window mWindow = default!;
     private Renderer mRenderer = default!;
 
@@ -31,14 +30,12 @@ public class App : AppBase
         mRenderer.DrawColorFloat = (0, 0, 0, 1);
         mRenderer.TryClear();
 
-        int lineCount = rapidlyExploringRandomTree.Edges.Count;
-        for (int i = 0; i < lineCount; i++)
-        {
-            LineF line = rapidlyExploringRandomTree.Edges[i];
+        Rect<float> renderArea = CalculateTreeRenderArea();
 
-            mRenderer.DrawColorFloat = new Sdl3Sharp.Video.Coloring.Color<float>(255, 0, 0, 1);
-            mRenderer.TryRenderLine(line.Start.X, line.Start.Y, line.End.X, line.End.Y);
-        }
+        IncreaseTree(5_000, 10, renderArea);
+        RenderTree(renderArea);
+        RenderUserInterface();
+
         mRenderer.TryRenderPresent();
 
         return Continue;
@@ -49,11 +46,6 @@ public class App : AppBase
         if (@event.Type is EventType.WindowCloseRequested)
         {
             return Success;
-        }
-
-        if (@event.Type is EventType.WindowShown)
-        {
-            Task.Run(StartTreeRender);
         }
 
         return Continue;
@@ -68,11 +60,49 @@ public class App : AppBase
         mWindow = default!;
     }
 
-    private void StartTreeRender()
+    private void IncreaseTree(int max, int vertexCount, Rect<float> renderArea)
     {
-        for (int i = 0; i < 10000; i++)
+        if (rapidlyExploringRandomTree.Vertices.Count > max)
         {
-            rapidlyExploringRandomTreeGenerator.GenerateNextVertex(rapidlyExploringRandomTree, 800, 600, 12.0);
+            return;
         }
+
+        for (int i = 0; i < vertexCount; i++)
+        {
+            rapidlyExploringRandomTreeGenerator.GenerateNextVertex(rapidlyExploringRandomTree, (int)renderArea.Width, (int)renderArea.Height, 20);
+        }
+    }
+    private void RenderTree(Rect<float> renderArea)
+    {
+        foreach (LineF line in rapidlyExploringRandomTree.Edges)
+        {
+            mRenderer.DrawColorFloat = new Sdl3Sharp.Video.Coloring.Color<float>(255, 0, 0, 1);
+            mRenderer.TryRenderLine(line.Start.X + renderArea.Left, line.Start.Y + renderArea.Top, line.End.X + renderArea.Left, line.End.Y + renderArea.Top);
+        }
+    }
+
+    private void RenderUserInterface()
+    {
+        int height = mRenderer.Window!.Size.Height;
+        int width = mRenderer.Window!.Size.Width;
+
+        mRenderer.DrawColor = new Sdl3Sharp.Video.Coloring.Color<byte>(0, 255, 0, 255);
+        mRenderer.TryRenderDebugText(WINDOW_MARGIN, WINDOW_MARGIN, "Rapidly Exploring Random Tree demo");
+        mRenderer.TryRenderDebugText(WINDOW_MARGIN, height - WINDOW_MARGIN, "Author: Michel Michels");
+
+        mRenderer.TryRenderDebugText(width - 4 * WINDOW_MARGIN, WINDOW_MARGIN, rapidlyExploringRandomTree.Vertices.Count.ToString());
+
+        mRenderer.TryRenderRect(CalculateTreeRenderArea());
+    }
+
+    private Rect<float> CalculateTreeRenderArea()
+    {
+        int textHeight = 16;
+        int height = mRenderer.Window!.Size.Height;
+        int width = mRenderer.Window!.Size.Width;
+
+        int rectWidth = width - 2 * WINDOW_MARGIN;
+        int rectHeight = height - 2 * WINDOW_MARGIN - 2 * textHeight;
+        return new(WINDOW_MARGIN, WINDOW_MARGIN + textHeight, rectWidth, rectHeight);
     }
 }
