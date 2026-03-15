@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using MichelMichels.RttSharp;
 using MichelMichels.RttSharp.Models;
@@ -22,15 +23,6 @@ public class App : AppBase
             return Failure;
         }
 
-        Task.Run(() =>
-        {
-            for (int i = 0; i < 10000; i++)
-            {
-                rapidlyExploringRandomTreeGenerator.GenerateNextVertex(rapidlyExploringRandomTree, 800, 600, 6.0);
-            }
-        });
-
-
         return Continue;
     }
 
@@ -38,10 +30,15 @@ public class App : AppBase
     {
         mRenderer.DrawColorFloat = (0, 0, 0, 1);
         mRenderer.TryClear();
-        Point<float>[] array = rapidlyExploringRandomTree.Vertices.Select(v => new Point<float>(v.X, v.Y)).ToArray();
-        ReadOnlySpan<Point<float>> points = new(array);
 
-        mRenderer.TryRenderLines(points);
+        int lineCount = rapidlyExploringRandomTree.Edges.Count;
+        for (int i = 0; i < lineCount; i++)
+        {
+            LineF line = rapidlyExploringRandomTree.Edges[i];
+
+            mRenderer.DrawColorFloat = new Sdl3Sharp.Video.Coloring.Color<float>(255, 0, 0, 1);
+            mRenderer.TryRenderLine(line.Start.X, line.Start.Y, line.End.X, line.End.Y);
+        }
         mRenderer.TryRenderPresent();
 
         return Continue;
@@ -54,6 +51,11 @@ public class App : AppBase
             return Success;
         }
 
+        if (@event.Type is EventType.WindowShown)
+        {
+            Task.Run(StartTreeRender);
+        }
+
         return Continue;
     }
 
@@ -64,5 +66,13 @@ public class App : AppBase
 
         mWindow?.Dispose();
         mWindow = default!;
+    }
+
+    private void StartTreeRender()
+    {
+        for (int i = 0; i < 10000; i++)
+        {
+            rapidlyExploringRandomTreeGenerator.GenerateNextVertex(rapidlyExploringRandomTree, 800, 600, 12.0);
+        }
     }
 }
